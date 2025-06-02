@@ -1,0 +1,101 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/fonts/graphik/Graphik Black Italic.otf",
+      "sha1": "0d7adea5522546edd9cd6cc1d712fafbfbb2b873"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Black.otf",
+      "sha1": "60cbf88a6b8907d918e31e782fca26bd09d74613"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Bold Italic.otf",
+      "sha1": "665071cbd1fca817c0015b360e1fa9569d722af3"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Bold.otf",
+      "sha1": "5e7a093b2ed19c4a8389e9ff04c2022b6af3611c"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Extra Light Italic.otf",
+      "sha1": "ad59ad768e52071cf4c384621189968234a3594a"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Extra Light.otf",
+      "sha1": "88d6e9b1fd9b33f740f1e6f8c2512a330f481ebc"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Light Italic.otf",
+      "sha1": "8917a8f24ed9e736100eca3be34f903c7a6fbb57"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Light.otf",
+      "sha1": "f797d4ddd1ad86bbfbd7081a33fd2634ace036fe"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Medium Italic.otf",
+      "sha1": "1f4a556e7a585711454e9330f48202e97137e2b8"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Medium.otf",
+      "sha1": "10a6e965aeecb194f7db568540f5790c3dd84339"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Regular Italic.otf",
+      "sha1": "f9a20457991ef9c71f4d2ee3c41b89e19eb51306"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Regular.otf",
+      "sha1": "fdff116cfdbd9b0f6d99ce2772a57bfc31397e50"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Semi Bold Italic.otf",
+      "sha1": "2e0b3b0482aaa2377014bf5b789400bffb46fcda"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Super Italic.otf",
+      "sha1": "0a3251d515491179275f1e78ad8386355712fe97"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Super.otf",
+      "sha1": "2c49e1b404a0b60b76b4ce2eb0894292cd3beeb2"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik Thin.otf",
+      "sha1": "775d5e3e6e900edbabece6211a212f552a55a047"
+    },
+    {
+      "path": "src/assets/fonts/graphik/Graphik ThinI talic.otf",
+      "sha1": "b496154c85a8fbc28dc2a4f6fa88a975457fb754"
+    },
+    {
+      "path": "src/assets/fonts/inter/Inter Black.otf",
+      "sha1": "68c456410eebd937a6496fff66d71311c8e844f7"
+    },
+    {
+      "path": "src/assets/fonts/inter/Inter Bold.otf",
+      "sha1": "c376b59a48facc029b9a384cc86f02992b2171ea"
+    },
+    {
+      "path": "src/assets/fonts/inter/Inter Italic.otf",
+      "sha1": "38db56ca1d9e726b5c6db786a8c53010e252c9f5"
+    },
+    {
+      "path": "src/assets/fonts/inter/Inter Medium.otf",
+      "sha1": "699375c590a1879bde1b53a7949b2659292ee3b0"
+    },
+    {
+      "path": "src/assets/fonts/inter/Inter Regular.otf",
+      "sha1": "efd846697930d88ab013b64d4e0f2129cd7e971f"
+    },
+    {
+      "path": "src/assets/fonts/magistral/Magistral Book.ttf",
+      "sha1": "f09be1a38136f3acf1e0510d1f0c646c7314ac50"
+    },
+    {
+      "path": "src/assets/fonts/magistral/Magistral Medium.otf",
+      "sha1": "cb70d4091c33bb7ca7cf91f7c27729a29a4e39db"
+    }
+  ]
+}
