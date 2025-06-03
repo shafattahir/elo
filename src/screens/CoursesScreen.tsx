@@ -1,111 +1,126 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, ScrollView, Image,Switch, } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, ScrollView, Image, ActivityIndicator, FlatList } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { useTheme } from '../contexts/ThemeContext';
-import { Icon } from 'react-native-vector-icons/Icon';
-import CustomSwitch from '../components/ui/CustomSwitch';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import MainLayout from './MainLayout';
 import DrawerScreen from './DrawerScreen';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCourses } from '../redux/actions/courseActions';
+import { RootState } from '../redux/reducers'; // Make sure this path is correct
+import CustomSwitch from '../components/ui/CustomSwitch';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
 };
 
-const CoursesScreen: React.FC<Props> = ({ navigation }) => {
+// Define your Course type based on API response
+type Course = {
+  id: string;
+  title: string;
+  completed: boolean;
+  time?: string;
+  category: string;
+  desc: string;
+  progress: number;
+};
 
- const { theme } = useTheme();
+type FilterOption = 'Newset' | 'Last activity' | 'Most activity' | 'Alphabetical (A-Z)' | 'Alphabetical (Z-A)' | 'Started' | 'None';
+
+const CoursesScreen: React.FC<Props> = ({ navigation }) => {
+  const dispatch = useDispatch();
+  const { loading, courses, error } = useSelector((state: RootState) => state.courses);
+  const { theme } = useTheme();
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterOption>('Newset');
+
+  useEffect(() => {
+    dispatch(fetchCourses() as any);
+  }, [dispatch]);
 
   const toggleDrawer = () => {
     setDrawerVisible(!drawerVisible);
   };
 
-  // Types
-  type CourseItem = {
-    id: string;
-    title: string;
-    completed: boolean;
-    time?: string;
-    category: string;
-    desc: string;
-    progress: number;
+  const imageMap: { [key: string]: any } = {
+    '1': require('../assets/icons/banner1.png'),
+    '2': require('../assets/icons/banner2.png'),
+    '3': require('../assets/icons/banner3.png'),
+    '4': require('../assets/icons/banner5.png'),
+    '5': require('../assets/icons/banner6.png'),
+    '6': require('../assets/icons/banner4.png'),
   };
 
-  const imageMap: { [key: string]: any } = {
-  '1': require('../assets/icons/banner1.png'),
-  '2': require('../assets/icons/banner2.png'),
-  '3': require('../assets/icons/banner3.png'),
-  '4': require('../assets/icons/banner5.png'),
-  '5': require('../assets/icons/banner6.png'),
-  '6': require('../assets/icons/banner4.png'),
-  // Add more as needed
-};
+  const filteredCourses = useMemo(() => {
+    if (!courses) return [];
+    
+    // First filter by search query
+    const searchFiltered = courses.filter((course: { title: string; desc: string; }) => 
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.desc.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-  type FilterOption = 'Newset' | 'Last activity' | 'Most activity' | 'Alphabetical (A-Z)' | 'Alphabetical (Z-A)' | 'Started' | 'None';
+    // Then apply the active filter
+    switch (activeFilter) {
+      case 'Newset':
+        return [...searchFiltered].sort((a, b) => 
+          (b.time ? 1 : 0) - (a.time ? 1 : 0) || 
+          new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime()
+        );
+      case 'Last activity':
+        return [...searchFiltered].sort((a, b) => 
+          (b.time ? 1 : 0) - (a.time ? 1 : 0)
+        );
+      case 'Most activity':
+        return [...searchFiltered].sort((a, b) => b.progress - a.progress);
+      case 'Alphabetical (A-Z)':
+        return [...searchFiltered].sort((a, b) => a.title.localeCompare(b.title));
+      case 'Alphabetical (Z-A)':
+        return [...searchFiltered].sort((a, b) => b.title.localeCompare(a.title));
+      case 'Started':
+        return searchFiltered.filter((course: { completed: any; }) => course.completed);
+      default:
+        return searchFiltered;
+    }
+  }, [courses, searchQuery, activeFilter]);
 
-  // State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<FilterOption>('Newset');
-
-  // Dummy Data
-  const courses: CourseItem[] = [
-    { id: '1', title: 'Real Estate (Buy and Hold/Rental)', completed: false, category: 'Join Event', desc: '5 Essential Steps to Begin Your Buy and Hold/Rental Investment Journey!', progress: 30 ,},
-    { id: '2', title: 'Real Estate (Fix and Flip)', completed: true, time: 'TODAY ● 4:00 PM', category: 'Join Event' , desc: '5 Easy Steps to Get You Fixing and Flippin                 ', progress: 90},
-    { id: '3', title: 'Franchise', completed: false, category: 'Join Event' , desc: '5 Proven Steps to Start a Profitable Franchise!        ', progress: 24,},
-    { id: '4', title: 'Collectible Coins', completed: false, category: 'Real Estate' , desc: 'Turn Your Passion for Coins into a Profitable Investment!          ', progress: 57},
-    { id: '5', title: 'Collectible Cars', completed: false, category: 'Rental' , desc: '5 Simple Steps to Unlock Profits in the Collectible Car Industry!            ', progress: 67},
-    { id: '6', title: 'Collectible Stamps', completed: true, category: 'Buy and Hold' , desc: 'From Collector to Investor: Unlock the Value of Stamps!         ', progress: 12},
-  ];
-
-  // Filter courses based on search and active filter
-const filteredCourses = useMemo(() => {
-  // First filter by search query
-  const searchFiltered = courses.filter(course => 
-    course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.desc.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Then apply the active filter
-  switch (activeFilter) {
-    case 'Newset':
-      return [...searchFiltered].sort((a, b) => 
-        (b.time ? 1 : 0) - (a.time ? 1 : 0) || // Items with time come first
-        new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime()
-      );
-      
-    case 'Last activity':
-      return [...searchFiltered].sort((a, b) => 
-        (b.time ? 1 : 0) - (a.time ? 1 : 0)
-      );
-      
-    case 'Most activity':
-      return [...searchFiltered].sort((a, b) => b.progress - a.progress);
-      
-    case 'Alphabetical (A-Z)':
-      return [...searchFiltered].sort((a, b) => a.title.localeCompare(b.title));
-      
-    case 'Alphabetical (Z-A)':
-      return [...searchFiltered].sort((a, b) => b.title.localeCompare(a.title));
-      
-    case 'Started':
-      return searchFiltered.filter(course => course.completed);
-      
-    default:
-      return searchFiltered;
+  if (loading) {
+    return (
+      <MainLayout onDrawerPress={toggleDrawer}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </MainLayout>
+    );
   }
-}, [courses, searchQuery, activeFilter]);
 
-  
+  if (error) {
+    return (
+      <MainLayout onDrawerPress={toggleDrawer}>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: theme.colors.black }]}>
+            Error: {error}
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => dispatch(fetchCourses() as any)}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </MainLayout>
+    );
+  }
+
   return (
-<MainLayout onDrawerPress={() => setDrawerVisible(true)}>
-
-     {/* Drawer Modal */}
+    <MainLayout onDrawerPress={() => setDrawerVisible(true)}>
+      {/* Drawer Modal */}
       <Modal
         visible={drawerVisible}
         transparent={true}
-        animationType="none" // We handle animation ourselves
+        animationType="none"
         onRequestClose={toggleDrawer}
       >
         <DrawerScreen 
@@ -113,235 +128,277 @@ const filteredCourses = useMemo(() => {
           visible={drawerVisible} 
         />
       </Modal>
-      <ScrollView style={styles.contentContainer}>
 
+      <ScrollView style={styles.contentContainer}>
         <Text style={[styles.welcomeText, { color: theme.colors.textColorTitle }]}>
-                Courses
+          Courses
         </Text>
 
-           {/* Join Event Section */}
+        {/* Join Event Section */}
         <View style={styles.gridItem}>
-            <View style={styles.rowWhiteRounded}>
-                <Image source= {require('../assets/icons/play_small_blue.png')} style={styles.playSmall} resizeMode="contain" />
-                <Text style={[styles.liveVideoText]}>
-                    Live Video
-                </Text> 
-            </View>
-                <Text style={styles.liveTabHeading}>
-                    Create Docs: Financial {'\n'}Condition & Liquidity
-                </Text>
-          
-                <View style={styles.rowCentered}>
-                      <Text style={[styles.liveTabLighttext, { color: theme.colors.textColorTitle }]}>TODAY</Text>
-                    <Image source= {require('../assets/icons/green_dot.png')} style={styles.greenDot} resizeMode="contain" />
-                    <Text style={[styles.liveTabLighttext, { color: theme.colors.textColorTitle }]}>
-                        4:00 PM
-                    </Text> 
-                </View>
+          <View style={styles.rowWhiteRounded}>
+            <Image source={require('../assets/icons/play_small_blue.png')} style={styles.playSmall} resizeMode="contain" />
+            <Text style={[styles.liveVideoText]}>
+              Live Video
+            </Text> 
+          </View>
+          <Text style={styles.liveTabHeading}>
+            Create Docs: Financial {'\n'}Condition & Liquidity
+          </Text>
+        
+          <View style={styles.rowCentered}>
+            <Text style={[styles.liveTabLighttext, { color: theme.colors.textColorTitle }]}>TODAY</Text>
+            <Image source={require('../assets/icons/green_dot.png')} style={styles.greenDot} resizeMode="contain" />
+            <Text style={[styles.liveTabLighttext, { color: theme.colors.textColorTitle }]}>
+              4:00 PM
+            </Text> 
+          </View>
 
-                <View style={styles.rowSpaceBetween}>
-                     <View style={styles.buttonContainer}>
-                    <TouchableOpacity onPress={() => {}}>
-                    <Text style={styles.textButton}>Join Event</Text>
-                    </TouchableOpacity>
-                    </View>
-                    <Image source= {require('../assets/icons/large_star.png')} style={styles.largeStar} resizeMode="contain" />
-                </View>
+          <View style={styles.rowSpaceBetween}>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity onPress={() => {}}>
+                <Text style={styles.textButton}>Join Event</Text>
+              </TouchableOpacity>
             </View>
-  
-
-              {/* Search and Filter Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Image source={require('../assets/icons/search.png')} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search"
-            placeholderTextColor="#888"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+            <Image source={require('../assets/icons/large_star.png')} style={styles.largeStar} resizeMode="contain" />
+          </View>
         </View>
-        <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => setShowFilters(true)}
-        >
-          <Image source={require('../assets/icons/filter.png')} style={styles.filterIcon} />
-        </TouchableOpacity>
-      </View>
+
+        {/* Search and Filter Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputContainer}>
+            <Image source={require('../assets/icons/search.png')} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search"
+              placeholderTextColor="#888"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.filterButton}
+            onPress={() => setShowFilters(true)}
+          >
+            <Image source={require('../assets/icons/filter.png')} style={styles.filterIcon} />
+          </TouchableOpacity>
+        </View>
 
         {/* Courses List */}
-        {filteredCourses.map((course) => (
-          <View key={course.id} style={styles.courseItem}>
-            <TouchableOpacity 
-              onPress={() => {navigation.navigate("CourseDetailsPage");}}
-            >
-
+        {filteredCourses.length > 0 ? (
+          filteredCourses.map((course: { id: React.Key | null | undefined; title: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; desc: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; progress: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; }) => (
+            <View key={course.id} style={styles.courseItem}>
+              <TouchableOpacity onPress={() => navigation.navigate("CourseDetailsPage")}>
                 <View style={styles.centerContainer}>
-                <Image source={imageMap[course.id]} style={styles.bannerImage} />
+                  {/* <Image source={imageMap[course.id]} style={styles.bannerImage} /> */}
                 </View>
 
-                 <View style={styles.spacer}/>
+                <View style={styles.spacer}/>
                 <View style={styles.courseDetails}>
-              <Text style={[styles.welcomeText]}>
-                {course.title}
-              </Text>
+                  <Text style={[styles.welcomeText]}>
+                    {course.title}
+                  </Text>
 
-            <View style={styles.spacer}/>
-             <Text style={[styles.liveTabLighttext]}>
-                {course.desc}
-              </Text>
+                  <View style={styles.spacer}/>
+                  <Text style={[styles.liveTabLighttext]}>
+                    {course.desc}
+                  </Text>
 
-              <View style={styles.spacer}/>
+                  <View style={styles.spacer}/>
 
-              <View style={styles.rowSpaceBetween}>
-        
-           <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${course.progress}%` }]} />
-            </View>
-            <View style={styles.progressInfo}>
-            <Text style={styles.progressPercent}>{course.progress}%</Text>
-            </View>
-
-            <Image source={require('../assets/icons/up_arrow.png')} style={styles.upArrow} />
+                  <View style={styles.rowSpaceBetween}>
+                    <View style={styles.progressBarContainer}>
+                      {/* <View style={[styles.progressBar, { width: `${course.progress}%` }]} /> */}
+                    </View>
+                    <View style={styles.progressInfo}>
+                      <Text style={styles.progressPercent}>{course.progress}%</Text>
+                    </View>
+                    <Image source={require('../assets/icons/up_arrow.png')} style={styles.upArrow} />
+                  </View>
                 </View>
-
-   
+              </TouchableOpacity>
+              <View style={styles.spacer}/>
             </View>
-            </TouchableOpacity>
-            <View style={styles.spacer}/>
-               
+          ))
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={[styles.emptyText, { color: theme.colors.textColorTitle }]}>
+              No courses found
+            </Text>
           </View>
-        ))}
+        )}
 
-  <View style={styles.spacer}/>
-  <View style={styles.spacer}/>
-  
+        <View style={styles.spacer}/>
+        <View style={styles.spacer}/>
       </ScrollView>
 
+      {/* Filter Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showFilters}
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <BlurView
+          style={styles.absolute}
+          blurType="dark"
+          blurAmount={10}
+          reducedTransparencyFallbackColor="white"
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.filterDrawer}>
+              <Text style={styles.filterHeader}>Filters</Text>
 
-{/* Filter Modal */}
-<Modal
-  animationType="slide"
-  transparent={true}
-  visible={showFilters}
-  onRequestClose={() => setShowFilters(false)}
->
-  <BlurView
-    style={styles.absolute}
-    blurType="dark"
-    blurAmount={10}
-    reducedTransparencyFallbackColor="white"
-  >
-    
-      <View style={styles.modalContainer}>
-        <View style={styles.filterDrawer}>
-          <Text style={styles.filterHeader}>Filters</Text>
-
-            <TouchableOpacity style={styles.crossBtn}
-               onPress={() => setShowFilters(false)}>
-                <Image source={require('../assets/icons/x.png')}  />
-               </TouchableOpacity>
+              <TouchableOpacity style={styles.crossBtn} onPress={() => setShowFilters(false)}>
+                <Image source={require('../assets/icons/x.png')} />
+              </TouchableOpacity>
         
-                <View style={styles.spacer}/>
-                  <View style={styles.spacer}/>
-             <Text style={styles.sortBy}>Sort by</Text>
-  <View style={styles.spacer}/>
-        <View style={styles.row}>  
-
-            <TouchableOpacity style={[
-                styles.filterItem,
-                activeFilter === 'Newset' && styles.activeFilterItem
-              ]}
-              onPress={() => {
-                setActiveFilter('Newset'); 
-                setShowFilters(false);
-              }}>
-                <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
-                  Newest
-                </Text>
-                </TouchableOpacity>
-            <TouchableOpacity style={[
-                styles.filterItem,
-                activeFilter === 'Last activity' && styles.activeFilterItem
-              ]}
-                 onPress={() => {
-                setActiveFilter('Last activity'); 
-                setShowFilters(false);
-              }}>
-                <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
-                  Last activity
-                </Text>
-                </TouchableOpacity>
-           <TouchableOpacity style={[
-                styles.filterItem,
-                activeFilter === 'Most activity' && styles.activeFilterItem
-              ]}
-                 onPress={() => {
-                setActiveFilter('Most activity'); 
-                setShowFilters(false);
-              }}>
-                <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
-                  Most activity
-                </Text>
-                </TouchableOpacity>
-               <TouchableOpacity style={[
-                styles.filterItem,
-                activeFilter === 'Alphabetical (A-Z)' && styles.activeFilterItem
-              ]}
-                 onPress={() => {
-                setActiveFilter('Alphabetical (A-Z)'); 
-                setShowFilters(false);
-              }}>
-                <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
-                  Alphabetical (A-Z)
-                </Text>
+              <View style={styles.spacer}/>
+              <View style={styles.spacer}/>
+              <Text style={styles.sortBy}>Sort by</Text>
+              <View style={styles.spacer}/>
+              
+              <View style={styles.row}>  
+                <TouchableOpacity 
+                  style={[
+                    styles.filterItem,
+                    activeFilter === 'Newset' && styles.activeFilterItem
+                  ]}
+                  onPress={() => {
+                    setActiveFilter('Newset'); 
+                    setShowFilters(false);
+                  }}
+                >
+                  <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
+                    Newest
+                  </Text>
                 </TouchableOpacity>
                 
-              <TouchableOpacity style={[
-                styles.filterItem,
-                activeFilter === 'Alphabetical (Z-A)' && styles.activeFilterItem
-              ]}
-                 onPress={() => {
-                setActiveFilter('Alphabetical (Z-A)'); 
-                setShowFilters(false);
-              }}>
-                <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
-                  Alphabetical (Z-A)
-                </Text>
+                <TouchableOpacity 
+                  style={[
+                    styles.filterItem,
+                    activeFilter === 'Last activity' && styles.activeFilterItem
+                  ]}
+                  onPress={() => {
+                    setActiveFilter('Last activity'); 
+                    setShowFilters(false);
+                  }}
+                >
+                  <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
+                    Last activity
+                  </Text>
                 </TouchableOpacity>
-
-   
-        </View>
-            <View style={styles.spacer}/>
-             <View style={styles.rowSpaceBetweenBordered}>
-                    <Text style={[styles.sortBy]}>
-                        Started
-                    </Text>
-
-                 
-                    <CustomSwitch
-                      value={activeFilter === 'Started'}
-                        onToggle={() => {
-                                if (activeFilter === 'Started') {
-                            setActiveFilter('None');
-                             setShowFilters(false);
-                            } else {
-                            setActiveFilter('Started');
-                             setShowFilters(false);
-                            }
-                        }}/>
-                </View>
-    <View style={styles.spacer}/>
-        </View>
-      </View>
-  </BlurView>
-</Modal>
-         </MainLayout>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.filterItem,
+                    activeFilter === 'Most activity' && styles.activeFilterItem
+                  ]}
+                  onPress={() => {
+                    setActiveFilter('Most activity'); 
+                    setShowFilters(false);
+                  }}
+                >
+                  <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
+                    Most activity
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.filterItem,
+                    activeFilter === 'Alphabetical (A-Z)' && styles.activeFilterItem
+                  ]}
+                  onPress={() => {
+                    setActiveFilter('Alphabetical (A-Z)'); 
+                    setShowFilters(false);
+                  }}
+                >
+                  <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
+                    Alphabetical (A-Z)
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.filterItem,
+                    activeFilter === 'Alphabetical (Z-A)' && styles.activeFilterItem
+                  ]}
+                  onPress={() => {
+                    setActiveFilter('Alphabetical (Z-A)'); 
+                    setShowFilters(false);
+                  }}
+                >
+                  <Text style={[styles.filterTextLabel, { color: theme.colors.textColorTitle }]}>
+                    Alphabetical (Z-A)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.spacer}/>
+              <View style={styles.rowSpaceBetweenBordered}>
+                <Text style={[styles.sortBy]}>
+                  Started
+                </Text>
+                <CustomSwitch
+                  value={activeFilter === 'Started'}
+                  onToggle={() => {
+                    if (activeFilter === 'Started') {
+                      setActiveFilter('None');
+                      setShowFilters(false);
+                    } else {
+                      setActiveFilter('Started');
+                      setShowFilters(false);
+                    }
+                  }}
+                />
+              </View>
+              <View style={styles.spacer}/>
+            </View>
+          </View>
+        </BlurView>
+      </Modal>
+    </MainLayout>
   );
 };
 
 const styles = StyleSheet.create({
+   loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
      spacer: {
     height : 20,
   },

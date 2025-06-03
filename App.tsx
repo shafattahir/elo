@@ -1,4 +1,6 @@
 import React from 'react';
+import { Provider } from 'react-redux';
+import store from './src/redux/store';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import { AuthProvider } from './src/contexts/AuthContext';
@@ -10,8 +12,9 @@ const App = () => {
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <RootNavigator />
-          
+              <Provider store={store}>
+                <RootNavigator />
+              </Provider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
